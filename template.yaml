@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: SAM Template for Hello World! example
+
+Globals:
+  Function:
+      CodeUri: src/
+      Runtime: nodejs16.x
+      MemorySize: 256
+      Timeout: 60
+      Architectures:
+        - x86_64
+ 
+Resources:
+
+  #-------Role Functions-------
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: /hello_world.lambdaHandler
+      Events:
+        HelloWorldEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyAPI
+            Path: /
+            Method: GET
+
+  #------- REST API -------
+  MyAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: my-test-api
+      StageName: Dev
+      GatewayResponses:
+        UNAUTHORIZED:
+          ResponseTemplates:
+            "application/json": '{ "message": "Invalid authorization token"}'
+        BAD_REQUEST_BODY:
+          ResponseTemplates:
+            "application/json": '{ "message": "$context.error.validationErrorString"}'
+
+Outputs:
+  WebEndpoint:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${MyAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
